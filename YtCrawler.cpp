@@ -116,19 +116,16 @@ int main(int argc, const char *argv[])
     CURLcode res;
     curl = curl_easy_init();
     for( int i=0; i<=n; ++i ){
-        int range=7;
+        int range=10;
         if( !links.size() )
             return 2;
         int rand;
-        if( !i )
-            rand=0;
-        else
-            rand=roll(std::min((int)links.size(), std::max((int)(links.size()/10), range)));
+        rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
         // printf("%d\n", links.size());
         std::sort(links.begin(), links.end());
         int j=0;
         while( visited[links[rand].second] ){
-            rand=roll(std::min((int)links.size(), std::max((int)(links.size()/10), range)));
+            rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
             ++j;
             range=std::max(range, j/100);
             if( j==100000 ){
