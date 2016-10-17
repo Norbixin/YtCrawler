@@ -6,6 +6,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 
 const char *url;
+std::map<std::string, bool> visited;
 std::string urlstr="";
 std::string input, match="href=\"/watch", match2="w-count\">", prefix="https://www.youtube.com/watch";
 std::vector<std::pair<int, std::string> > links;
@@ -121,20 +122,19 @@ int main(int argc, const char *argv[])
         if( !i )
             rand=0;
         else
-            rand=roll(std::max((int)(links.size()/10), 7));
+            rand=roll(std::min((int)links.size(), std::max((int)(links.size()/10), 7)));
         // printf("%d\n", links.size());
         std::sort(links.begin(), links.end());
-        for( int i=0; i<200; i+=2 ){
-            if( links[rand].first<100 )
-                rand=roll(6);
-            if( links[rand].second!=urlstr )
-                break;
-            else
-                --i;
+        int j=0;
+        while( visited[links[rand].second] ){
+            rand=roll(std::min((int)links.size(), std::max((int)(links.size()/10), 7)));
+            ++j;
+            if( j==10000 ){
+                return 3;
+            }
         }
-        if( links.back().first<100 )
-            rand=links.size()-1;
         urlstr=links[rand].second;
+        visited[urlstr]=true;
         url=urlstr.c_str();
         printf("%d: ", i);
         std::cout<<links[rand].first<<" "<<links[rand].second<<"\n";
