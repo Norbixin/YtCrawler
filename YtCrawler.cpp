@@ -5,8 +5,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 const char *url;
-std::string input, match="href=\"/watch", prefix="https://www.youtube.com/watch";
-std::vector<std::string> links;
+std::string input, match="href=\"/watch", match2="w-count\">", prefix="https://www.youtube.com/watch";
+std::vector<std::pair<int, std::string> > links;
 boost::random::mt19937 gen;
 std::ostringstream stream;
 unsigned int n;
@@ -25,11 +25,12 @@ int roll(int x) {
 
 void search(std::string str){
     links.clear();
-    std::string newlink;
+    std::string newlink, size;
     for( int i=0; i<str.length(); ++i ){
         if( str[i]=='h' ){
             bool create=false;
             newlink=prefix;
+            size="";
             int j=0;
             std::string wypisz;
             for( ; j<match.size(); ++j ){
@@ -40,17 +41,46 @@ void search(std::string str){
                 else
                     break;
             }
+            //<span class="stat view-count">8 102 
             if( j==match.size() ){
                 create=true;
                 // std::cout<<wypisz<<" "<<j<<"\n";
                 for( ; str[i+j]!='"'; ++j ){
                     // printf("%c", str[i+j]);
+                    if( str[i+j]==';' ){
+                        create=false;
+                        break;
+                    }
                     newlink+=str[i+j];
+                }
+                if( newlink==links.back().second )
+                    create=false;
+                if( create ){
+                    while( str[i+j]!='w' || str[i+j+1]!='-' || str[i+j+2]!='c' ){
+                        ++j;
+                    }
+                    int k=0;
+                    for( ; k<match2.size(); ++k ){
+                        if( str[i+j+k]==match2[k] )
+                            continue;
+                        else
+                            break;
+                    }
+                    if( k==match2.size() ){
+                        while( str[i+j+k]<'a' ){
+                            if( str[i+j+k]<='9' && str[i+j+k]>='0' )
+                                size+=str[i+j+k];
+                            ++k;
+                        }
+                    }
                 }
             }
             if( create ){
-                links.push_back(newlink);
-                // std::cout<<newlink<<"\n";
+                if( size=="" )
+                    size+="999999999";
+                // std::cout<<"a"<<size<<"a"<<"\n";
+                links.push_back({std::stoi(size), newlink});
+                // std::cout<<newlink<<" "<<size<<"\n";
             }
             i+=j-1;
         }
@@ -78,17 +108,29 @@ int main(int argc, const char *argv[])
     }
     printf("Enter video output level: ");
     scanf("%d", &n);
-    links.push_back(input);
+    links.push_back({99999, input});
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
     for( int i=0; i<=n; ++i ){
         if( !links.size() )
             return 2;
-        int rand=roll(links.size()-1);
-        url=links[rand].c_str();
+        int rand;
+        if( !i )
+            rand=0;
+        else
+            rand=roll(std::max((int)(links.size()/10), 7));
+        // printf("%d\n", links.size());
+        std::sort(links.begin(), links.end());
+        for( int i=0; i<100; ++i ){
+            if( links[rand].first<100 )
+                rand=roll(6);
+            else
+                break;
+        }
+        url=links[rand].second.c_str();
         printf("%d: ", i);
-        std::cout<<links[rand]<<"\n";
+        std::cout<<links[rand].first<<" "<<links[rand].second<<"\n";
         if (curl)
         {
             curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -98,8 +140,8 @@ int main(int argc, const char *argv[])
         }
     	std::string output = stream.str();
     	search(output);
+        // std::cout<<output;
     }
     curl_easy_cleanup(curl);
-    // std::cout<<output;
 	return 0;
 }
