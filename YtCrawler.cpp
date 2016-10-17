@@ -4,7 +4,9 @@
 #include <sstream>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+
 const char *url;
+std::string urlstr="";
 std::string input, match="href=\"/watch", match2="w-count\">", prefix="https://www.youtube.com/watch";
 std::vector<std::pair<int, std::string> > links;
 boost::random::mt19937 gen;
@@ -122,13 +124,18 @@ int main(int argc, const char *argv[])
             rand=roll(std::max((int)(links.size()/10), 7));
         // printf("%d\n", links.size());
         std::sort(links.begin(), links.end());
-        for( int i=0; i<100; ++i ){
+        for( int i=0; i<200; i+=2 ){
             if( links[rand].first<100 )
                 rand=roll(6);
-            else
+            if( links[rand].second!=urlstr )
                 break;
+            else
+                --i;
         }
-        url=links[rand].second.c_str();
+        if( links.back().first<100 )
+            rand=links.size()-1;
+        urlstr=links[rand].second;
+        url=urlstr.c_str();
         printf("%d: ", i);
         std::cout<<links[rand].first<<" "<<links[rand].second<<"\n";
         if (curl)
