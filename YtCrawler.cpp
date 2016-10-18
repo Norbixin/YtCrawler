@@ -2,20 +2,27 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <sstream>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
 
-#define maxrange 10 //
+#define maxrange 10 // how many url's are considered for the next video
 
+struct slink{
+    int viewCount;
+    std::string videoUrl;
+    std::string videoName;
+};
 const char *url;
 std::map<std::string, bool> visited;
 std::string urlstr="";
 std::string input, match="href=\"/watch", match2="le=\"",match3="w-count\">", prefix="https://www.youtube.com/watch";
-std::vector<std::pair<int, std::pair<std::string, std::string> > > links;
-boost::random::mt19937 gen;
+std::vector<slink> links;
 std::ostringstream stream;
 unsigned int n;
 
+bool sortOperator(slink a, slink b){
+    return a.viewCount<b.viewCount;
+}
+
+// Function for Curl write
 size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
     std::ostringstream *stream = (std::ostringstream*)userdata;
     size_t count = size * nmemb;
@@ -23,11 +30,12 @@ size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
     return count;
 }
 
+// Random
 int roll(int x) {
-    boost::random::uniform_int_distribution<> dist(0, x);
-    return dist(gen);
+    return rand()%(x+1);
 }
 
+// Search for url's
 void search(std::string str){
     links.clear();
     std::string newlink, size, name;
@@ -37,30 +45,28 @@ void search(std::string str){
             newlink=prefix;
             size=name="";
             int j=0;
-            std::string wypisz;
             for( ; j<match.size(); ++j ){
                 if( str[i+j]==match[j] ){
-                    wypisz+=str[i+j];
                     continue;
                 }
                 else
                     break;
             }
-            //<span class="stat view-count">8 102 
+            // Make link
             if( j==match.size() ){
                 create=true;
-                // std::cout<<wypisz<<" "<<j<<"\n";
+                // Find video link
                 for( ; str[i+j]!='"'; ++j ){
-                    // printf("%c", str[i+j]);
                     if( str[i+j]==';' ){
                         create=false;
                         break;
                     }
                     newlink+=str[i+j];
                 }
-                if( newlink==links.back().second.first )
+                if( newlink==links.back().videoUrl )
                     create=false;
                 if( create ){
+                    // Find video title
                     while( str[i+j]!='l' || str[i+j+1]!='e' ){
                         ++j;
                     }
@@ -87,6 +93,7 @@ void search(std::string str){
                             ++k;
                         }
                     }
+                    // Find view count
                     while( str[i+j]!='w' || str[i+j+1]!='-' || str[i+j+2]!='c' ){
                         ++j;
                     }
@@ -106,19 +113,18 @@ void search(std::string str){
                     }
                 }
             }
+            // Make link
             if( create ){
                 if( size=="" )
                     size+="999999999";
-                // std::cout<<name<<"\n";
-                // std::cout<<"a"<<size<<"a"<<"\n";
-                links.push_back({std::stoi(size), {newlink, name}});
-                // std::cout<<newlink<<" "<<size<<"\n";
+                links.push_back({std::stoi(size), newlink, name});
             }
             i+=j-1;
         }
     }
 }
 
+// Check if given url is valid
 bool urlCheck(){
     for( int i=0; i<prefix.length(); ++i ){
         if( input[i]==prefix[i] )
@@ -131,16 +137,23 @@ bool urlCheck(){
 
 int main(int argc, const char *argv[])
 {
+    struct timeval time; 
+    gettimeofday(&time,NULL);
+    srand((time.tv_sec * 1000) + (time.tv_usec / 1000));
+    
     printf("Enter video url: ");
 	std::cin>>input;
+    
     if( !urlCheck() ){
         printf("Url should look like https://www.youtube.com/watch?v=abcdefghijk, not ");
         std::cout<<input<<"\n";
         return 1;
     }
+    
     printf("Enter video output level: ");
     scanf("%d", &n);
-    links.push_back({99999, {input, ""}});
+    
+    links.push_back({0, input, ""});
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
@@ -149,11 +162,12 @@ int main(int argc, const char *argv[])
         if( !links.size() )
             return 2;
         int rand;
+        
+        // Choose new url
         rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
-        // printf("%d\n", links.size());
-        std::sort(links.begin(), links.end());
+        std::sort(links.begin(), links.end(), sortOperator);
         int j=0;
-        while( visited[links[rand].second.first] ){
+        while( visited[links[rand].videoUrl] ){
             rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
             ++j;
             range=std::max(range, j/100);
@@ -161,13 +175,16 @@ int main(int argc, const char *argv[])
                 return 3;
             }
         }
-        urlstr=links[rand].second.first;
+        urlstr=links[rand].videoUrl;
         visited[urlstr]=true;
         url=urlstr.c_str();
+
         if( i ){
             printf("%d: ", i);
-            std::cout<<links[rand].first<<" "<<links[rand].second.first<<" '"<<links[rand].second.second<<"'\n";
+            std::cout<<links[rand].viewCount<<" "<<links[rand].videoUrl<<" '"<<links[rand].videoName<<"'\n";
         }
+
+        // Get output from url
         if (curl)
         {
             curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -177,7 +194,6 @@ int main(int argc, const char *argv[])
         }
     	std::string output = stream.str();
     	search(output);
-        // std::cout<<output;
     }
     curl_easy_cleanup(curl);
 	return 0;
