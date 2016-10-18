@@ -5,11 +5,13 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
+#define maxrange 7 //
+
 const char *url;
 std::map<std::string, bool> visited;
 std::string urlstr="";
-std::string input, match="href=\"/watch", match2="w-count\">", prefix="https://www.youtube.com/watch";
-std::vector<std::pair<int, std::string> > links;
+std::string input, match="href=\"/watch", match2="le=\"",match3="w-count\">", prefix="https://www.youtube.com/watch";
+std::vector<std::pair<int, std::pair<std::string, std::string> > > links;
 boost::random::mt19937 gen;
 std::ostringstream stream;
 unsigned int n;
@@ -28,12 +30,12 @@ int roll(int x) {
 
 void search(std::string str){
     links.clear();
-    std::string newlink, size;
+    std::string newlink, size, name;
     for( int i=0; i<str.length(); ++i ){
         if( str[i]=='h' ){
             bool create=false;
             newlink=prefix;
-            size="";
+            size=name="";
             int j=0;
             std::string wypisz;
             for( ; j<match.size(); ++j ){
@@ -56,10 +58,10 @@ void search(std::string str){
                     }
                     newlink+=str[i+j];
                 }
-                if( newlink==links.back().second )
+                if( newlink==links.back().second.first )
                     create=false;
                 if( create ){
-                    while( str[i+j]!='w' || str[i+j+1]!='-' || str[i+j+2]!='c' ){
+                    while( str[i+j]!='l' || str[i+j+1]!='e' ){
                         ++j;
                     }
                     int k=0;
@@ -70,6 +72,32 @@ void search(std::string str){
                             break;
                     }
                     if( k==match2.size() ){
+                        while( str[i+j+k]!='"' ){
+                            if( str[i+j+k]=='&' ){
+                                k+=5;
+                                if( str[i+j+k+1]=='q' )
+                                    name+='"';
+                                continue;
+                            }
+                            if( str[i+j+k]==';' ){
+                                ++k;
+                                continue;
+                            }
+                            name+=str[i+j+k];
+                            ++k;
+                        }
+                    }
+                    while( str[i+j]!='w' || str[i+j+1]!='-' || str[i+j+2]!='c' ){
+                        ++j;
+                    }
+                    k=0;
+                    for( ; k<match3.size(); ++k ){
+                        if( str[i+j+k]==match3[k] )
+                            continue;
+                        else
+                            break;
+                    }
+                    if( k==match3.size() ){
                         while( str[i+j+k]<'a' ){
                             if( str[i+j+k]<='9' && str[i+j+k]>='0' )
                                 size+=str[i+j+k];
@@ -81,8 +109,9 @@ void search(std::string str){
             if( create ){
                 if( size=="" )
                     size+="999999999";
+                // std::cout<<name<<"\n";
                 // std::cout<<"a"<<size<<"a"<<"\n";
-                links.push_back({std::stoi(size), newlink});
+                links.push_back({std::stoi(size), {newlink, name}});
                 // std::cout<<newlink<<" "<<size<<"\n";
             }
             i+=j-1;
@@ -111,12 +140,12 @@ int main(int argc, const char *argv[])
     }
     printf("Enter video output level: ");
     scanf("%d", &n);
-    links.push_back({99999, input});
+    links.push_back({99999, {input, ""}});
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
     for( int i=0; i<=n; ++i ){
-        int range=10;
+        int range=maxrange;
         if( !links.size() )
             return 2;
         int rand;
@@ -124,7 +153,7 @@ int main(int argc, const char *argv[])
         // printf("%d\n", links.size());
         std::sort(links.begin(), links.end());
         int j=0;
-        while( visited[links[rand].second] ){
+        while( visited[links[rand].second.first] ){
             rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
             ++j;
             range=std::max(range, j/100);
@@ -132,11 +161,11 @@ int main(int argc, const char *argv[])
                 return 3;
             }
         }
-        urlstr=links[rand].second;
+        urlstr=links[rand].second.first;
         visited[urlstr]=true;
         url=urlstr.c_str();
         printf("%d: ", i);
-        std::cout<<links[rand].first<<" "<<links[rand].second<<"\n";
+        std::cout<<links[rand].first<<" "<<links[rand].second.first<<" \""<<links[rand].second.second<<"\"\n";
         if (curl)
         {
             curl_easy_setopt(curl, CURLOPT_URL, url);
