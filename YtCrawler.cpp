@@ -4,16 +4,18 @@
 #include <sstream>
 
 #define maxrange 10 // how many url's are considered for the next video
+#define maxtime 20 // maximum length of video in minutes
 
 struct slink{
     int viewCount;
     std::string videoUrl;
     std::string videoName;
+    std::string videoTime;
 };
 const char *url;
 std::map<std::string, bool> visited;
 std::string urlstr="";
-std::string input, match="href=\"/watch", match2="le=\"",match3="w-count\">", prefix="https://www.youtube.com/watch";
+std::string input, match="href=\"/watch", match2="le=\"", match3="w-count\">", match4="ime\">", prefix="https://www.youtube.com/watch";
 std::vector<slink> links;
 std::ostringstream stream;
 unsigned int n;
@@ -38,12 +40,12 @@ int roll(int x) {
 // Search for url's
 void search(std::string str){
     links.clear();
-    std::string newlink, size, name;
+    std::string newlink, size, name, vTime;
     for( int i=0; i<str.length(); ++i ){
         if( str[i]=='h' ){
             bool create=false;
             newlink=prefix;
-            size=name="";
+            size=name=vTime="";
             int j=0;
             for( ; j<match.size(); ++j ){
                 if( str[i+j]==match[j] ){
@@ -66,6 +68,7 @@ void search(std::string str){
                 if( newlink==links.back().videoUrl )
                     create=false;
                 if( create ){
+                    
                     // Find video title
                     while( str[i+j]!='l' || str[i+j+1]!='e' ){
                         ++j;
@@ -93,6 +96,7 @@ void search(std::string str){
                             ++k;
                         }
                     }
+                    j+=k;
                     // Find view count
                     while( str[i+j]!='w' || str[i+j+1]!='-' || str[i+j+2]!='c' ){
                         ++j;
@@ -111,13 +115,36 @@ void search(std::string str){
                             ++k;
                         }
                     }
+                    j+=k;
+                    // Find video time
+                    while( str[i+j]!='i' || str[i+j+1]!='m' || str[i+j+2]!='e' ){
+                        ++j;
+                    }
+                    k=0;
+                    for( ; k<match4.size(); ++k ){
+                        if( str[i+j+k]==match4[k] )
+                            continue;
+                        else
+                            break;
+                    }
+                    if( k==match4.size() ){
+                        while( str[i+j+k]!=':' ){
+                            if( str[i+j+k]<='9' && str[i+j+k]>='0' )
+                                vTime+=str[i+j+k];
+                            ++k;
+                        }
+                    }
+                    j+=k;
                 }
             }
             // Make link
             if( create ){
+                if( vTime=="" )
+                    vTime="0";
                 if( size=="" )
                     size+="999999999";
-                links.push_back({std::stoi(size), newlink, name});
+                if( stoi(vTime)<=maxtime )
+                    links.push_back({std::stoi(size), newlink, name, vTime});
             }
             i+=j-1;
         }
@@ -153,7 +180,7 @@ int main(int argc, const char *argv[])
     printf("Enter video output level: ");
     scanf("%d", &n);
     
-    links.push_back({0, input, ""});
+    links.push_back({0, input, "", "0"});
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
