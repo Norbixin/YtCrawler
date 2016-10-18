@@ -5,6 +5,7 @@
 
 #define maxrange 10 // how many url's are considered for the next video
 #define maxtime 20 // maximum length of video in minutes
+#define mintime 0 // maximum length of video in minutes
 
 struct slink{
     int viewCount;
@@ -143,7 +144,7 @@ void search(std::string str){
                     vTime="0";
                 if( size=="" )
                     size+="999999999";
-                if( stoi(vTime)<=maxtime )
+                if( stoi(vTime)<=maxtime && stoi(vTime)>=mintime )
                     links.push_back({std::stoi(size), newlink, name, vTime});
             }
             i+=j-1;
