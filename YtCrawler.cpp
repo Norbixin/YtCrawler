@@ -139,7 +139,7 @@ void search(std::string str){
                 }
             }
             // Make link
-            if( create ){
+            if( create && !visited[newlink] ){
                 if( vTime=="" )
                     vTime="0";
                 if( size=="" )
@@ -195,14 +195,6 @@ int main(int argc, const char *argv[])
         rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
         std::sort(links.begin(), links.end(), sortOperator);
         int j=0;
-        while( visited[links[rand].videoUrl] ){
-            rand=roll(std::min((int)links.size()-1, std::max((int)(links.size()/10), range)));
-            ++j;
-            range=std::max(range, j/100);
-            if( j==100000 ){
-                return 3;
-            }
-        }
         urlstr=links[rand].videoUrl;
         visited[urlstr]=true;
         url=urlstr.c_str();
