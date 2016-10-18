@@ -5,7 +5,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
-#define maxrange 7 //
+#define maxrange 10 //
 
 const char *url;
 std::map<std::string, bool> visited;
@@ -75,7 +75,7 @@ void search(std::string str){
                         while( str[i+j+k]!='"' ){
                             if( str[i+j+k]=='&' ){
                                 k+=5;
-                                if( str[i+j+k+1]=='q' )
+                                if( str[i+j+k-4]=='q' )
                                     name+='"';
                                 continue;
                             }
@@ -164,8 +164,10 @@ int main(int argc, const char *argv[])
         urlstr=links[rand].second.first;
         visited[urlstr]=true;
         url=urlstr.c_str();
-        printf("%d: ", i);
-        std::cout<<links[rand].first<<" "<<links[rand].second.first<<" \""<<links[rand].second.second<<"\"\n";
+        if( i ){
+            printf("%d: ", i);
+            std::cout<<links[rand].first<<" "<<links[rand].second.first<<" '"<<links[rand].second.second<<"'\n";
+        }
         if (curl)
         {
             curl_easy_setopt(curl, CURLOPT_URL, url);
