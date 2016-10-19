@@ -186,9 +186,6 @@ int main(int argc, const char *argv[])
 	unsigned maxIndexLen = std::to_string(outputLevel).length();
 	unsigned maxViewLen = 0;
 	std::string indStr, viewStr, nameStr, urlStr;
-	std::string empty;
-	for(unsigned ind = 0; ind < MAX_NAME_LEN; ++ind)
-		empty += " ";
 
 	links.push_back({0, input, "", "0"});
 	CURL *curl = curl_easy_init();;
@@ -217,15 +214,29 @@ int main(int argc, const char *argv[])
 			for(unsigned ind = indStr.length(); ind < maxIndexLen; ind++)
 				indStr = " " + indStr;
 			// Name
-			// Note that some characters are multibyte (length() of "♥" is 3, not 1)
-			// TODO fix multibyte chars
+			// Note that some characters are multibyte (length() of "♥" is 3, not 1)…
+			// TODO fix multibyte chars ( should always work )
 			nameStr = links[rand].videoName;
-			if(nameStr.length() >= MAX_NAME_LEN) 
-				nameStr = nameStr.substr(0, MAX_NAME_LEN - 1) + "…";
-			else {
-				nameStr += empty;
-				nameStr = nameStr.substr(0, MAX_NAME_LEN);
-			}
+            bool tooLong=false;
+            int addSpace=0;
+            if( nameStr.length()>MAX_NAME_LEN )
+                tooLong=true;
+            nameStr.resize(MAX_NAME_LEN, ' ');
+            for( int it=0; it<nameStr.length(); ++it ){
+                if( nameStr[it]<0 ){
+                    addSpace++;
+                }
+            }
+            addSpace/=2;
+            if( nameStr.back()<0 && nameStr[nameStr.length()-2]>=0 )
+                nameStr.pop_back();
+            if( tooLong ){
+                nameStr.pop_back();
+                nameStr+="…";
+            }
+            while( addSpace-- ){
+                nameStr+=" ";
+            }
 			// URL
 			// I'm not entirely sure all url are the same length
 			urlStr = links[rand].videoUrl; 
