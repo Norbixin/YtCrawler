@@ -1,11 +1,11 @@
-CC=g++
-CFLAGS=-std=c++11 -Wall -O2
-GLFLAGS=-lcurl
+CXX      ?= g++
+CXXFLAGS ?= -std=c++11 -Wall -pedantic -O2
+CXXLIBS  ?= -lcurl
 
-NAME=YtCrawler
-FILES=YtCrawler.cpp
+NAME     ?= YtCrawler
+FILES    ?= main.cpp
 
 all:
-	$(CC) $(CFLAGS) $(FILES) -o $(NAME) $(GLFLAGS)
+	$(CXX) $(CXXFLAGS) $(FILES) -o $(NAME) $(CXXLIBS)
 clean:
-	rm -rf *o $(NAME) YtCrawler
+	rm -rf *o $(NAME)
