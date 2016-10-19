@@ -5,7 +5,7 @@
 
 #define MAX_RANGE    10 // how many url's are considered for the next video
 #define MAX_TIME     20 // maximum length of video in minutes
-#define MIN_TIME      0 // maximum length of video in minutes
+#define MIN_TIME      0 // minimum length of video in minutes
 #define MAX_NAME_LEN 35 // maximum video name length in characters
 
 struct slink{
