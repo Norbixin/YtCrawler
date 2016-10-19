@@ -227,7 +227,7 @@ int main(int argc, const char *argv[])
                     addSpace++;
                 }
             }
-            addSpace/=2;
+            addSpace=(addSpace+1)/2;
             if( nameStr.back()<0 && nameStr[nameStr.length()-2]>=0 )
                 nameStr.pop_back();
             if( tooLong ){
