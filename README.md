@@ -1,4 +1,9 @@
 # YtCrawler
-#A simple script in c++, which enters random videos, beginning from given url.
-##Things you will need:
--Curl library
+### Simple C++ YouTube crawler. Aims to discover less viewed videos
+
+## Usage
+- `make` to compile
+- then `./YtCrawler` to launch
+
+## Dependencies
+- `libcurl`
