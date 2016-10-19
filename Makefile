@@ -2,7 +2,7 @@ CXX      ?= g++
 CXXFLAGS ?= -std=c++11 -Wall -pedantic -O2
 CXXLIBS  ?= -lcurl
 
-NAME     ?= YtCrawler
+NAME     ?= YtCrawler.bin
 FILES    ?= main.cpp
 
 all:
