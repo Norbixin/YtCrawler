@@ -1,2 +1,4 @@
-YtCrawler.bin
+*.bin
+*.app
 *.un*
+*.swp*
